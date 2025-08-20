@@ -1,0 +1,30 @@
+html {
+  background: url('https://images.unsplash.com/photo-1534373403591-45505d436a56?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  /* 
+    This provides a dark overlay for the landing page text. 
+    It's cleared when the app loads.
+    Overflow is managed in JS to allow scrolling on the landing page.
+  */
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+}
+body.dragging {
+  cursor: ns-resize;
+}
+body.dragging * {
+  user-select: none;
+  pointer-events: none;
+}
