@@ -12,7 +12,7 @@ import { LiveMusicHelper } from './utils/LiveMusicHelper';
 import { AudioAnalyser } from './utils/AudioAnalyser';
 import './components/LandingPage'; // Import the landing page component
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1alpha' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const model = 'lyria-realtime-exp';
 
 function main() {

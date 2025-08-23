@@ -137,7 +137,7 @@ export class PromptController extends LitElement {
     this.lastValidText = this.text;
   }
 
-  update(changedProperties: Map<string, unknown>) {
+  override update(changedProperties: Map<string, unknown>) {
     if (changedProperties.has('showCC') && !this.showCC) {
       this.learnMode = false;
     }
