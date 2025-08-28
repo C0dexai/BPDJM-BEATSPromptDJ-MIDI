@@ -7,6 +7,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 
 @customElement('toast-message')
+// FIX: The class should extend LitElement to be a web component.
 export class ToastMessage extends LitElement {
   static override styles = css`
     .toast {

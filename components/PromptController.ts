@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import { css, html, LitElement } from 'lit';
-import { customElement, property, query } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 
 import './WeightKnob';
@@ -14,6 +14,7 @@ import type { Prompt, ControlChange } from '../types';
 
 /** A single prompt input associated with a MIDI CC. */
 @customElement('prompt-controller')
+// FIX: The class should extend LitElement to be a web component.
 export class PromptController extends LitElement {
   static override styles = css`
     .prompt {
@@ -40,12 +41,90 @@ export class PromptController extends LitElement {
       visibility: hidden;
       user-select: none;
       margin-top: 0.75vmin;
+      transition: all 0.2s ease;
+      min-width: 50px;
       .learn-mode & {
         color: orange;
         border-color: orange;
+        animation: pulse-orange 1.5s infinite;
+      }
+      &.learn-success {
+        color: #4ade80;
+        border-color: #4ade80;
+        animation: none;
       }
       .show-cc & {
         visibility: visible;
+      }
+    }
+    @keyframes pulse-orange {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(255, 165, 0, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);
+      }
+    }
+    .sensitivity-control {
+      visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 0.5vmin;
+      font-size: 1.3vmin;
+      color: #fff;
+      width: 80%;
+      .show-cc & {
+        visibility: visible;
+      }
+      label {
+        font-family: monospace;
+      }
+      input[type='range'] {
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+        margin-top: 2px;
+      }
+      input[type='range']:focus {
+        outline: none;
+      }
+      /* Thumb */
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 1.5vmin;
+        width: 1.5vmin;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        margin-top: -0.5vmin;
+      }
+      input[type='range']::-moz-range-thumb {
+        height: 1.5vmin;
+        width: 1.5vmin;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+      }
+      /* Track */
+      input[type='range']::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 0.5vmin;
+        cursor: pointer;
+        background: #0006;
+        border-radius: 0.5vmin;
+        border: 0.1vmin solid #fff;
+      }
+      input[type='range']::-moz-range-track {
+        width: 100%;
+        height: 0.5vmin;
+        cursor: pointer;
+        background: #0006;
+        border-radius: 0.5vmin;
+        border: 0.1vmin solid #fff;
       }
     }
     #text {
@@ -70,7 +149,7 @@ export class PromptController extends LitElement {
       }
     }
     :host([filtered]) {
-      weight-knob { 
+      weight-knob {
         opacity: 0.5;
       }
       #text {
@@ -96,6 +175,7 @@ export class PromptController extends LitElement {
 
   @property({ type: Number }) cc = 0;
   @property({ type: Number }) channel = 0; // Not currently used
+  @property({ type: Number }) sensitivity = 1;
 
   @property({ type: Boolean }) learnMode = false;
   @property({ type: Boolean }) showCC = false;
@@ -108,6 +188,10 @@ export class PromptController extends LitElement {
 
   @property({ type: Number }) audioLevel = 0;
 
+  @state() private learnSuccess = false;
+  @state() private midiActive = false;
+  private midiActiveTimeout: number | undefined;
+
   private lastValidText!: string;
 
   override connectedCallback() {
@@ -119,9 +203,26 @@ export class PromptController extends LitElement {
         this.cc = cc;
         this.channel = channel;
         this.learnMode = false;
+
+        this.learnSuccess = true;
+        setTimeout(() => {
+          this.learnSuccess = false;
+        }, 1000);
+
         this.dispatchPromptChange();
       } else if (cc === this.cc) {
-        this.weight = (value / 127) * 2;
+        const normalizedValue = value / 127;
+        const curvedValue = Math.pow(normalizedValue, this.sensitivity);
+        this.weight = curvedValue * 2;
+
+        this.midiActive = true;
+        if (this.midiActiveTimeout) {
+          clearTimeout(this.midiActiveTimeout);
+        }
+        this.midiActiveTimeout = window.setTimeout(() => {
+          this.midiActive = false;
+        }, 200);
+
         this.dispatchPromptChange();
       }
     });
@@ -156,6 +257,7 @@ export class PromptController extends LitElement {
           weight: this.weight,
           cc: this.cc,
           color: this.color,
+          sensitivity: this.sensitivity,
         },
       }),
     );
@@ -208,20 +310,35 @@ export class PromptController extends LitElement {
 
   private toggleLearnMode() {
     this.learnMode = !this.learnMode;
+    if (this.learnMode) {
+      this.learnSuccess = false;
+    }
+  }
+
+  private updateSensitivity(e: Event) {
+    const target = e.target as HTMLInputElement;
+    this.sensitivity = parseFloat(target.value);
+    this.dispatchPromptChange();
   }
 
   override render() {
-    const classes = classMap({
-      'prompt': true,
+    const promptClasses = classMap({
+      prompt: true,
       'learn-mode': this.learnMode,
       'show-cc': this.showCC,
     });
-    return html`<div class=${classes}>
+
+    const midiClasses = classMap({
+      'learn-success': this.learnSuccess,
+    });
+
+    return html`<div class=${promptClasses}>
       <weight-knob
         id="weight"
         value=${this.weight}
         color=${this.filtered ? '#888' : this.color}
         audioLevel=${this.filtered ? 0 : this.audioLevel}
+        ?midiActive=${this.midiActive}
         @input=${this.updateWeight}></weight-knob>
       <span
         id="text"
@@ -229,8 +346,23 @@ export class PromptController extends LitElement {
         @focus=${this.onFocus}
         @keydown=${this.onKeyDown}
         @blur=${this.updateText}></span>
-      <div id="midi" @click=${this.toggleLearnMode}>
-        ${this.learnMode ? 'Learn' : `CC:${this.cc}`}
+      <div id="midi" class=${midiClasses} @click=${this.toggleLearnMode}>
+        ${this.learnMode
+          ? 'Learn...'
+          : this.learnSuccess
+          ? 'Learned!'
+          : `CC:${this.cc}`}
+      </div>
+      <div class="sensitivity-control">
+        <label for="sensitivity-slider-${this.promptId}">Curve</label>
+        <input
+          id="sensitivity-slider-${this.promptId}"
+          type="range"
+          min="0.25"
+          max="4"
+          step="0.01"
+          .value=${this.sensitivity}
+          @input=${this.updateSensitivity} />
       </div>
     </div>`;
   }

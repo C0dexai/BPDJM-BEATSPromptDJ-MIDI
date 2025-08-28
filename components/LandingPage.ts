@@ -2,6 +2,7 @@ import { css, html, LitElement } from 'lit';
 import { customElement } from 'lit/decorators.js';
 
 @customElement('landing-page')
+// FIX: The class should extend LitElement to be a web component.
 export class LandingPage extends LitElement {
   static override styles = css`
     :host {

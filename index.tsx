@@ -114,6 +114,7 @@ function buildPromptMap(promptList: {color: string, text: string}[], prefix: str
       weight: startOn.includes(prompt) ? 1 : 0,
       cc: i,
       color,
+      sensitivity: 1,
     });
   }
 

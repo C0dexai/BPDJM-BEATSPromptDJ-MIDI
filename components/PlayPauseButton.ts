@@ -7,6 +7,7 @@ import { customElement, property } from 'lit/decorators.js';
 import type { PlaybackState } from '../types';
 
 @customElement('play-pause-button')
+// FIX: The class should extend LitElement to be a web component.
 export class PlayPauseButton extends LitElement {
 
   @property({ type: String }) playbackState: PlaybackState = 'stopped';

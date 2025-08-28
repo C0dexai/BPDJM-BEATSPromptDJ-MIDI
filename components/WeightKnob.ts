@@ -15,6 +15,7 @@ const HALO_LEVEL_MODIFIER = 1;
 
 /** A knob for adjusting and visualizing prompt weight. */
 @customElement('weight-knob')
+// FIX: The class should extend LitElement to be a web component.
 export class WeightKnob extends LitElement {
   static override styles = css`
     :host {
@@ -44,11 +45,30 @@ export class WeightKnob extends LitElement {
       will-change: transform, box-shadow, background, opacity;
       pointer-events: none;
     }
+    #midi-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 50%;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: none;
+      box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    }
+    :host([midiActive]) #midi-indicator {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
   `;
 
   @property({ type: Number }) value = 0;
   @property({ type: String }) color = '#000';
   @property({ type: Number }) audioLevel = 0;
+  @property({ type: Boolean, reflect: true }) midiActive = false;
 
   private dragStartPos = 0;
   private dragStartValue = 0;
@@ -137,6 +157,7 @@ export class WeightKnob extends LitElement {
 
     return html`
       <div id="halo" style=${haloStyle}></div>
+      <div id="midi-indicator"></div>
       <!-- Static SVG elements -->
       ${this.renderStaticSvg()}
       <!-- SVG elements that move, separated to limit redraws -->

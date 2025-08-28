@@ -15,6 +15,7 @@ import { MidiDispatcher } from '../utils/MidiDispatcher';
 
 /** The grid of prompt inputs. */
 @customElement('prompt-dj-midi')
+// FIX: The class should extend LitElement to be a web component.
 export class PromptDjMidi extends LitElement {
   static override styles = css`
     :host {
@@ -327,6 +328,7 @@ export class PromptDjMidi extends LitElement {
         text=${prompt.text}
         weight=${prompt.weight}
         color=${prompt.color}
+        sensitivity=${prompt.sensitivity ?? 1}
         .midiDispatcher=${this.midiDispatcher}
         .showCC=${this.showMidi}
         audioLevel=${this.audioLevel}
